@@ -6,6 +6,7 @@
 
 #[macro_use]
 mod console;
+mod cpu;
 mod lang_items;
 mod sbi;
 
@@ -19,29 +20,21 @@ fn clear_bss() {
     (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
+const BOOT_HART_ID: usize = 0;
+
 #[no_mangle]
-pub fn rust_main() -> ! {
-    extern "C" {
-        fn stext();
-        fn etext();
-        fn srodata();
-        fn erodata();
-        fn sdata();
-        fn edata();
-        fn sbss();
-        fn ebss();
-        fn boot_stack();
-        fn boot_stack_top();
-    };
+pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
+    unsafe {
+        cpu::set_cpu_id(hartid);
+    }
+    if hartid != BOOT_HART_ID {
+        println!("Hello, world! from cpu {}", hartid);
+        cpu::send_ipi(hartid + 1);
+        loop {}
+    }
     clear_bss();
-    println!("Hello, world!");
-    println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-    println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-    println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-    println!(
-        "boot_stack [{:#x}, {:#x})",
-        boot_stack as usize, boot_stack_top as usize
-    );
-    println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+    println!("Hello, world! from cpu {}", hartid);
+    cpu::send_ipi(hartid + 1);
+    loop {}
     panic!("Shutdown machine!");
 }

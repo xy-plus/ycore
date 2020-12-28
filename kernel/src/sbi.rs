@@ -32,6 +32,10 @@ pub fn console_getchar() -> usize {
     sbi_call(SBI_CONSOLE_GETCHAR, 0, 0, 0)
 }
 
+pub fn send_ipi(hart_mask: usize) {
+    sbi_call(SBI_SEND_IPI, &hart_mask as *const _ as usize, 0, 0);
+}
+
 pub fn shutdown() -> ! {
     sbi_call(SBI_SHUTDOWN, 0, 0, 0);
     panic!("It should shutdown!");

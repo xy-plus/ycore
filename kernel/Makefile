@@ -2,6 +2,7 @@ MODE ?= release
 BOARD ?= qemu
 SBI ?= rustsbi
 ARCH ?= riscv64
+SMP ?= 4
 
 BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin
 # BOOTLOADER := default # opensbi
@@ -20,7 +21,8 @@ $(BOARD):
 		-machine virt \
 		-nographic \
 		-bios $(BOOTLOADER) \
-		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
+		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) \
+		-smp $(SMP)
 
 build: $(KERNEL_BIN)
 
