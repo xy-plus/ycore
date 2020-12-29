@@ -2,3 +2,4 @@
 Cargo.lock
 target
 bootloader
+kernel/src/link_app.S
