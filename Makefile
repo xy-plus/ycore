@@ -6,3 +6,7 @@ run:
 
 env:
 	make -C kernel env
+
+clean:
+	make -C user clean
+	make -C kernel clean

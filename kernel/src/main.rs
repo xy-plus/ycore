@@ -5,10 +5,17 @@
 #![feature(panic_info_message)]
 
 #[macro_use]
+extern crate log;
+
+#[macro_use]
 mod console;
+
+mod batch;
 mod cpu;
 mod lang_items;
 mod sbi;
+mod syscall;
+mod trap;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -28,14 +35,16 @@ pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
     unsafe {
         cpu::set_cpu_id(hartid);
     }
-    if hartid != BOOT_HART_ID {
-        println!("Hello, world! from cpu {}", hartid);
-        cpu::send_ipi(hartid + 1);
-        loop {}
+    if hartid == BOOT_HART_ID {
+        clear_bss();
+        console::init("info");
+        info!("--- Hello, world! from cpu {} ---", hartid);
+        trap::init();
+        batch::init();
+        cpu::broadcast_ipi(); // wake other core
+        batch::run_next_app();
+        // unreachable!
     }
-    clear_bss();
-    println!("Hello, world! from cpu {}", hartid);
-    cpu::send_ipi(hartid + 1);
+    info!("--- Hello, world! from cpu {} ---", hartid);
     loop {}
-    panic!("Shutdown machine!");
 }

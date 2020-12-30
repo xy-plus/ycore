@@ -4,6 +4,8 @@ SBI ?= rustsbi
 ARCH ?= riscv64
 SMP ?= 4
 
+.PHONY: all clean build kernel run
+
 BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin
 # BOOTLOADER := default # opensbi
 TARGET := riscv64gc-unknown-none-elf
@@ -39,3 +41,6 @@ env:
 	mkdir -p ../bootloader
 	wget https://github.com/luojia65/rustsbi/releases/download/v0.1.0/rustsbi-qemu.zip -O ../bootloader/rustsbi-qemu.zip
 	unzip ../bootloader/rustsbi-qemu.zip -d../bootloader
+
+clean:
+	cargo clean
