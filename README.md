@@ -1,0 +1,5 @@
+# YCORE
+
+```
+make env && make
+```
