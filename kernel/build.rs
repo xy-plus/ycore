@@ -20,6 +20,9 @@ fn insert_app_data() -> Result<()> {
         })
         .collect();
     apps.sort();
+    while apps[0].len() == 0 {
+        apps.remove(0);
+    }
 
     writeln!(f, r#"
     .align 4

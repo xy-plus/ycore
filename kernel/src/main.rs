@@ -39,6 +39,11 @@ pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
         clear_bss();
         console::init("info");
         info!("--- Hello, world! from cpu {} ---", hartid);
+        extern "C" {
+            fn boot_stack();
+            fn boot_stack_top();
+        }
+        info!("boot_stack: {:#x}, boot_stack_top: {:#x}", boot_stack as usize, boot_stack_top as usize);
         trap::init();
         batch::init();
         cpu::broadcast_ipi(); // wake other core
@@ -46,5 +51,7 @@ pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
         // unreachable!
     }
     info!("--- Hello, world! from cpu {} ---", hartid);
+    trap::init();
+    batch::run_next_app();
     loop {}
 }

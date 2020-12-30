@@ -1,3 +1,5 @@
+.PHONY: all clean run env
+
 all: run
 
 run:
