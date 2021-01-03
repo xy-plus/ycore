@@ -14,10 +14,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 elf:
 	cargo build --$(MODE)
 
-binary: elf
-	$(foreach elf, $(ELFS), $(OBJCOPY) $(elf) --strip-all -O binary $(patsubst $(TARGET_DIR)/%, $(TARGET_DIR)/%.bin, $(elf));)
-
-build: binary
+build: elf
 
 clean:
 	cargo clean

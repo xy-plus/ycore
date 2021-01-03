@@ -15,15 +15,12 @@ global_asm!(include_str!("trap.S"));
 pub fn init() {
     extern "C" {
         fn __alltraps();
-        fn __restore();
     }
     unsafe {
         sstatus::set_sie();
         stvec::write(__alltraps as usize, TrapMode::Direct);
     }
     info!("__alltraps: {:x}", __alltraps as usize);
-    info!("__restore: {:x}", __restore as usize);
-    
 }
 
 #[no_mangle]

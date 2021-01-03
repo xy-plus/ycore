@@ -13,6 +13,7 @@ mod console;
 mod batch;
 mod cpu;
 mod lang_items;
+mod loader;
 mod sbi;
 mod syscall;
 mod trap;
@@ -43,7 +44,10 @@ pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
             fn boot_stack();
             fn boot_stack_top();
         }
-        info!("boot_stack: {:#x}, boot_stack_top: {:#x}", boot_stack as usize, boot_stack_top as usize);
+        info!(
+            "boot_stack: {:#x}, boot_stack_top: {:#x}",
+            boot_stack as usize, boot_stack_top as usize
+        );
         trap::init();
         batch::init();
         cpu::broadcast_ipi(); // wake other core
@@ -52,6 +56,6 @@ pub fn rust_main(hartid: usize, _device_tree_paddr: usize) -> ! {
     }
     info!("--- Hello, world! from cpu {} ---", hartid);
     trap::init();
-    batch::run_next_app();
+    // batch::run_next_app();
     loop {}
 }

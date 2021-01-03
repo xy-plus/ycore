@@ -1,5 +1,5 @@
+use std::fs::{read_dir, File};
 use std::io::{Result, Write};
-use std::fs::{File, read_dir};
 
 fn main() {
     println!("cargo:rerun-if-changed=../user/src/bin/");
@@ -24,33 +24,49 @@ fn insert_app_data() -> Result<()> {
         apps.remove(0);
     }
 
-    writeln!(f, r#"
+    writeln!(
+        f,
+        r#"
     .align 4
     .section .data
     .global _num_app
 _num_app:
     .quad {}
-    "#, apps.len())?;
+    "#,
+        apps.len()
+    )?;
 
     for i in 0..apps.len() {
-        writeln!(f, r#"
+        writeln!(
+            f,
+            r#"
     .quad app_{}_start
-        "#, i)?;
+        "#,
+            i
+        )?;
     }
-    writeln!(f, r#"
+    writeln!(
+        f,
+        r#"
     .quad app_{}_end
-    "#, apps.len() - 1)?;
+    "#,
+        apps.len() - 1
+    )?;
 
     for (idx, app) in apps.iter().enumerate() {
         println!("app_{}: {}", idx, app);
-        writeln!(f, r#"
+        writeln!(
+            f,
+            r#"
     .section .data
     .global app_{0}_start
     .global app_{0}_end
 app_{0}_start:
-    .incbin "{2}{1}.bin"
+    .incbin "{2}{1}"
 app_{0}_end:
-        "#, idx, app, TARGET_PATH)?;
+        "#,
+            idx, app, TARGET_PATH
+        )?;
     }
     Ok(())
 }

@@ -8,7 +8,6 @@ const USER_STACK_SIZE: usize = 4096 * 2;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
 const MAX_APP_NUM: usize = 16;
 const MAX_CPU_NUM: usize = 4;
-const APP_BASE_ADDRESS: usize = 0x80280000;
 const APP_SIZE_LIMIT: usize = 0x20000;
 
 #[repr(align(4096))]
@@ -92,11 +91,7 @@ impl AppManagerInner {
         }
     }
 
-    fn app_base_addr() -> usize {
-        return APP_BASE_ADDRESS + cpu::id() * APP_SIZE_LIMIT;
-    }
-
-    unsafe fn load_app(&self, app_id: usize) {
+    unsafe fn load_app(&self, app_id: usize) -> usize {
         if app_id >= self.num_app {
             // panic!("All applications completed!");
             info!("No app to run!");
@@ -104,25 +99,12 @@ impl AppManagerInner {
         }
         // clear icache
         llvm_asm!("fence.i" :::: "volatile");
-        let app_base_addr_ = Self::app_base_addr();
-        info!(
-            "Loading app_{}: {:x}..{:x} to {:x}",
-            app_id,
-            self.app_start[app_id],
-            self.app_start[app_id + 1], 
-            app_base_addr_
-        );
-        // clear app area
-        (app_base_addr_..(app_base_addr_ + APP_SIZE_LIMIT)).for_each(|addr| {
-            (addr as *mut u8).write_volatile(0);
-        });
-        // core::ptr::write_bytes(app_base_addr_ as *mut u8, 0, APP_SIZE_LIMIT);
+        info!("Loading app_{}", app_id);
         let app_src = core::slice::from_raw_parts(
             self.app_start[app_id] as *const u8,
             self.app_start[app_id + 1] - self.app_start[app_id],
         );
-        let app_dst = core::slice::from_raw_parts_mut(app_base_addr_ as *mut u8, app_src.len());
-        app_dst.copy_from_slice(app_src);
+        return crate::loader::load_from_elf(app_src);
     }
 
     pub fn get_current_app(&self) -> usize {
@@ -166,20 +148,21 @@ pub fn print_app_info() {
 pub fn run_next_app() -> ! {
     let app_manager = APP_MANAGER.lock();
     let current_app = app_manager.inner.borrow().get_current_app();
+    let mut entry = 0;
     unsafe {
-        app_manager.inner.borrow().load_app(current_app);
+        entry += app_manager.inner.borrow().load_app(current_app);
     }
     app_manager.inner.borrow_mut().move_to_next_app();
     drop(app_manager);
     extern "C" {
         fn __restore(cx_addr: usize);
     }
-    let app_base_addr = AppManagerInner::app_base_addr();
-    info!("switch to addr: {:x}", app_base_addr);
+    // let app_base_addr = AppManagerInner::app_base_addr();
+    info!("switch to addr: {:x}", entry);
     unsafe {
         __restore(
             KERNEL_STACKs[cpu::id()].push_context(TrapContext::app_init_context(
-                app_base_addr,
+                entry,
                 USER_STACKs[cpu::id()].get_sp(),
             )) as *const _ as usize,
         );
